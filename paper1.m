@@ -17,7 +17,7 @@ Fs=128;
 channel={'FC6'};
 method='F';
 wlen=256;
-wshft=128;
+wshft=16;
 for i=1:length(VideoClass0)
     X=squeeze(data(VideoClass0(i),:,:));
     FeatureClass0(:,i)=FeatureGen(X,channel,method,Fs,wlen,wshft);
@@ -27,3 +27,10 @@ for i=1:length(VideoClass1)
     X=squeeze(data(VideoClass1(i),:,:));
     FeatureClass1(:,i)=FeatureGen(X,channel,method,Fs,wlen,wshft);
 end
+
+%%
+%SVM classification
+Data=[[zeros(length(FeatureClass0(:)),1) FeatureClass0(:)];[ones(length(FeatureClass1(:)),1) FeatureClass1(:)]];
+%%
+[B,C,O]=Classifier(Data,'svm',0.7,4);
+
