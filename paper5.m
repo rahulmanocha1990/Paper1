@@ -346,10 +346,11 @@ for filenum=1:size(FeatFiles,1)
 %     end
     %SVM classification
    Data=[[zeros(size(FC0,1),1) FC0];[ones(size(FC1,1),1) FC1];[2*ones(size(FC2,1),1) FC2];[3*ones(size(FC3,1),1) FC3]];
-   [B,C,O]=Classifier(Data,'svm',0.7,4);
+   %[B,C,O]=Classifier(Data,'svm',0.7,4);
+   [loss,stats] = utl_nested_crossval({Data(:,2:end),Data(:,1)}, 'args',{{'svm','kernel','poly','gamma',1,'d',5,'r',1}});
 
    fprintf(fid,'Subject%d\n',filenum);
-   fprintf(fid,'Accuracy,%f\n',B);
+   fprintf(fid,'Accuracy,%f\n',(1-loss)*100);
    fprintf(fid,'ConfMat\n');
      for con=1:4
          fprintf(fid,'%f,%f,%f,%f\n',C(con,:));
