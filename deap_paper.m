@@ -192,3 +192,4 @@ for filenum=1:size(MatFiles,1)
    outfile=sprintf('../Paper1/deap_featvect/%s.mat',name(16:end-4));
    save(outfile,'FeatVect','labels');
 end
+fclose(fid);
