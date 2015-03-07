@@ -79,7 +79,7 @@ cd ../common
 %     for chann=1:32
 %         for emo=1:4
 %           for bin=1:4
-%             [rho(emo,bin,chann),pvalue(emo,bin,chann)]=corr(squeeze(FeatVect(:,bin,chann)),labels(:,emo),'type','Spearman');
+%             [rho(emo,bin,chann),pvalue(emo,bin,chann)]=corr(squeeze(FeatVect(:,bin,chann)),labels(:,emo),'type','Spearman','tail','left');
 %             if(pvalue(emo,bin,chann)<=0.005)
 %                 maxcorr005{flag001}=[emo,bin,chann,rho(emo,bin,chann)];
 %                 flag001=flag001+1;
@@ -91,14 +91,14 @@ cd ../common
 %         end
 %     end
 %    outfile=sprintf('../Paper1/deap_binpower_welch/%s.mat',name(16:end-4));
-%    save(outfile,'FeatVect','labels','rho','pvalue','maxcorr001','maxcorr01');
+%    save(outfile,'FeatVect','labels','rho','pvalue','maxcorr005','maxcorr01');
 % end
 
 
-
+% 
 %%
-%Single trial classification , using 4 frequency bins, 32 channels and 14
-%symmertric channels
+% %Single trial classification , using 4 frequency bins, 32 channels and 14
+% %symmertric channels
 epoch=[4225,8064];
 %Cind =[1:32]; % channel indices
 SymmChann=channel2ind('../data_matlab/channels.txt',{'Fp1','Fp2','AF3','AF4','F3',...
@@ -114,7 +114,7 @@ end
 Fs=128;
 wlen=128;
 wshft=0;
-ExperimentId='../Paper1/Exp_28_Feb_2015_deap_single_trial.csv';
+ExperimentId='../Paper1/Exp_6_March_2015_deap_single_trial.csv';
 fid=fopen(ExperimentId,'w');
 fprintf(fid,'Single Trial Classification with Bin power features \n');
 for filenum=1:size(MatFiles,1)
@@ -152,26 +152,41 @@ for filenum=1:size(MatFiles,1)
   J3=fishercriterion(FeatVect,Dominance);
   %Cross Validation with Leave one out using Naive Bayes
   % Seperate models for arousal , valence, dominance
-  Mdl1=fitcnb(FeatVect(:,J1>0.3),Valence,'Leaveout','on');
-  Loss1=kfoldLoss(Mdl1);
-  C1=confusionmat(Valence,kfoldPredict(Mdl1));
-  Mdl2=fitcnb(FeatVect(:,J2>0.3),Arousal,'Leaveout','on');
-  Loss2=kfoldLoss(Mdl2);
-  C2=confusionmat(Arousal,kfoldPredict(Mdl2));
-  Mdl3=fitcnb(FeatVect(:,J3>0.3),Dominance,'Leaveout','on');
-  Loss3=kfoldLoss(Mdl3);
-  C3=confusionmat(Dominance,kfoldPredict(Mdl3));
- 
+  if(J1==0)
+      Loss1=100;
+      C1=zeros(2,2);
+  else
+    Mdl1=fitcnb(FeatVect(:,J1>1),Valence,'Leaveout','on');
+    Loss1=kfoldLoss(Mdl1);
+    C1=confusionmat(Valence,kfoldPredict(Mdl1));
+  end
+  if(J2==0)
+      Loss2=100;
+      C2=zeros(2,2);
+  else
+    Mdl2=fitcnb(FeatVect(:,J2>1),Arousal,'Leaveout','on');
+    Loss2=kfoldLoss(Mdl2);
+    C2=confusionmat(Arousal,kfoldPredict(Mdl2));
+  end
+  if(J3==0)
+      Loss3=100;
+      C3=zeros(2,2);
+  else
+      Mdl3=fitcnb(FeatVect(:,J3>1),Dominance,'Leaveout','on');
+      Loss3=kfoldLoss(Mdl3);
+      C3=confusionmat(Dominance,kfoldPredict(Mdl3));
+  end
+  
    fprintf(fid,'Subject%d\n',filenum);
    
    fprintf(fid,'Valence Accuracy,%f\n',(1-Loss1)*100);
-   fprintf(fid,'Valence F1 score,%f\n',(2*C1(2,2))/((2*C1(2,2))+C(1,2)+C1(2,1)));
+   fprintf(fid,'Valence F1 score,%f\n',(2*C1(2,2))/((2*C1(2,2))+C1(1,2)+C1(2,1)));
    
    fprintf(fid,'Arousal Accuracy,%f\n',(1-Loss2)*100);
-   fprintf(fid,'Arousal F1 score,%f\n',(2*C2(2,2))/((2*C2(2,2))+C(1,2)+C2(2,1)));
+   fprintf(fid,'Arousal F1 score,%f\n',(2*C2(2,2))/((2*C2(2,2))+C2(1,2)+C2(2,1)));
    
    fprintf(fid,'Dominance Accuracy,%f\n',(1-Loss3)*100);
-   fprintf(fid,'Dominance F1 score,%f\n',(2*C3(2,2))/((2*C3(2,2))+C(1,2)+C3(2,1)));
+   fprintf(fid,'Dominance F1 score,%f\n',(2*C3(2,2))/((2*C3(2,2))+C3(1,2)+C3(2,1)));
    
    
    outfile=sprintf('../Paper1/deap_featvect/%s.mat',name(16:end-4));
